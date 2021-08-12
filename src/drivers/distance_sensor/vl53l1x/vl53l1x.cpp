@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2020 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2021 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,27 +36,31 @@
 
 #include "vl53l1x.hpp"
 
-#define VL53L1X_SAMPLE_RATE                    50  // ms, default
-#define VL53L1X_INTER_MEAS_MS				   50  // ms
+#define VL53L1X_DELAY                          20   //ms
+#define VL53L1X_SAMPLE_RATE                    200  // ms, default
+#define VL53L1X_INTER_MEAS_MS				   200  // ms
 #define VL53L1X_SHORT_RANGE			            1  // sub-2 meter distance mode
 #define VL53L1X_LONG_RANGE			            2  // sub-4 meter distance mode
 #define VL53L1X_RANGE_STATUS_OUT_OF_BOUNDS     13 // region of interest out of bounds error
 #define VL53L1X_RANGE_STATUS_OK                 0 // range status ok
 #define VL53L1X_ROI_FAR_RIGHT                 247 // ROI far right of optical center
 #define VL53L1X_ROI_MID_RIGHT                 215 // ROI middle right of optical center
-#define VL53L1X_ROI_CENTER                    183 // ROI optical center
+#define VL53L1X_ROI_CENTER_LEFT               183 // ROI optical center left
+#define VL53L1X_ROI_CENTER                    199 // ROI optical center
 #define VL53L1X_ROI_MID_LEFT                  167 // ROI middle left of optical center
 #define VL53L1X_ROI_FAR_LEFT                  151 // ROI far left of optical center
-#define VL53L1X_ROI_FAR_RIGHT_LO               10 // ROI
+#define VL53L1X_ROI_FAR_RIGHT_LO               10 // ROI far right lo
 #define VL53L1X_ROI_MID_RIGHT_LO               42 // ROI middle right of optical center
-#define VL53L1X_ROI_CENTER_LO                  74 // ROI optical center
+#define VL53L1X_ROI_CENTER_LEFT_LO             74 // ROI optical center left lo
+#define VL53L1X_ROI_CENTER_LO                  60 // ROI optical center
 #define VL53L1X_ROI_MID_LEFT_LO                90 // ROI middle left of optical center
-#define VL53L1X_ROI_FAR_LEFT_LO               106 // ROI
-#define VL53L1X_ROI_FAR_RIGHT_HI              243 // ROI
+#define VL53L1X_ROI_FAR_LEFT_LO               106 // ROI far left lo
+#define VL53L1X_ROI_FAR_RIGHT_HI              243 // ROI far right hi
 #define VL53L1X_ROI_MID_RIGHT_HI              211 // ROI middle right of optical center
-#define VL53L1X_ROI_CENTER_HI                 179 // ROI optical center
+#define VL53L1X_ROI_CENTER_LEFT_HI            179 // ROI optical center left hi
+#define VL53L1X_ROI_CENTER_HI                 195 // ROI optical center hi
 #define VL53L1X_ROI_MID_LEFT_HI               163 // ROI middle left of optical center
-#define VL53L1X_ROI_FAR_LEFT_HI               147 // ROI
+#define VL53L1X_ROI_FAR_LEFT_HI               147 // ROI far left hi
 
 /* ST */
 const uint8_t VL51L1X_DEFAULT_CONFIGURATION[] = {
@@ -250,7 +254,7 @@ int VL53L1X::probe()
 void VL53L1X::RunImpl()
 {
 	uint8_t dataReady = 0;
-	uint8_t roiCenter[] = {VL53L1X_ROI_FAR_RIGHT, VL53L1X_ROI_MID_RIGHT, VL53L1X_ROI_CENTER, VL53L1X_ROI_MID_LEFT, VL53L1X_ROI_FAR_LEFT, VL53L1X_ROI_FAR_RIGHT_LO, VL53L1X_ROI_MID_RIGHT_LO, VL53L1X_ROI_CENTER_LO, VL53L1X_ROI_MID_LEFT_LO, VL53L1X_ROI_FAR_LEFT_LO, VL53L1X_ROI_FAR_RIGHT_HI, VL53L1X_ROI_MID_RIGHT_HI, VL53L1X_ROI_CENTER_HI, VL53L1X_ROI_MID_LEFT_HI, VL53L1X_ROI_FAR_LEFT_HI};
+	uint8_t roiCenter[] = {VL53L1X_ROI_FAR_RIGHT, VL53L1X_ROI_MID_RIGHT, VL53L1X_ROI_CENTER_LEFT, VL53L1X_ROI_MID_LEFT, VL53L1X_ROI_FAR_LEFT, VL53L1X_ROI_FAR_RIGHT_LO, VL53L1X_ROI_MID_RIGHT_LO, VL53L1X_ROI_CENTER_LEFT_LO,  VL53L1X_ROI_MID_LEFT_LO, VL53L1X_ROI_FAR_LEFT_LO, VL53L1X_ROI_FAR_RIGHT_HI, VL53L1X_ROI_MID_RIGHT_HI, VL53L1X_ROI_CENTER_LEFT_HI, VL53L1X_ROI_MID_LEFT_HI, VL53L1X_ROI_FAR_LEFT_HI};
 	static uint8_t zone = 0;
 	uint8_t zoneLimit = sizeof(roiCenter) / sizeof(uint8_t);
 
@@ -263,7 +267,7 @@ void VL53L1X::RunImpl()
 		collect();
 	}
 
-	ScheduleDelayed(VL53L1X_SAMPLE_RATE);
+	ScheduleDelayed(VL53L1X_DELAY);
 
 	// zone modulus increment
 	zone = (zone + 1) % zoneLimit;
